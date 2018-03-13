@@ -563,7 +563,7 @@ Dtype Net<Dtype>::ForwardFromTo(int start, int end) {
       mut_bot_data = bottom_vecs_[i][0]->mutable_cpu_data();
       if( (mut_layer_fp_idx >=0) && (mut_layer_fp_idx < bottom_vecs_[i][0]->count()) && (Is_In_Test==0)) Flip_Bit((void*)(&(mut_bot_data[mut_layer_fp_idx])));
     }
-
+/*
     if(Clamp_On && (step_cur>0) ) { // crash when step_cur==0. Unknown yet. Maybe we need to check data ready or not first.
       if( (deviceid<=0) && (i>0) )  {
         int count=bottom_vecs_[i][0]->count();
@@ -573,7 +573,7 @@ Dtype Net<Dtype>::ForwardFromTo(int start, int end) {
         Clamp_data_gpu(count, mut_bot_gpu_data, low_Bound, Data_Range);
       }
     }
-
+*/
     for (int c = 0; c < before_forward_.size(); ++c) {
       before_forward_[c]->run(i);
     }
@@ -587,6 +587,7 @@ Dtype Net<Dtype>::ForwardFromTo(int start, int end) {
   return loss;
 }
 
+template <typename Dtype>
 void Net<Dtype>::Print_Layer_Info(void)
 {
   int i, nLayers, nParamSets;

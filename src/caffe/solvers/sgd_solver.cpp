@@ -212,8 +212,6 @@ void sgd_update_gpu(int N, Dtype* g, Dtype* h, Dtype momentum,
     Dtype local_rate);
 #endif
 
-#define MAX_DEPTH(64)
-
 template <typename Dtype>
 void SGDSolver<Dtype>::ComputeUpdateValue(int param_id, Dtype rate) {
   const vector<Blob<Dtype>*>& net_params = this->net_->learnable_params();
@@ -222,9 +220,10 @@ void SGDSolver<Dtype>::ComputeUpdateValue(int param_id, Dtype rate) {
   Dtype local_rate = rate * net_params_lr[param_id];
 
   float *mut_param;
-  if( (step_cur == mut_step) && (rank_ == 0) && (param_id==mut_param_set) ) {
-    mut_param = (float *)history->mutable_cpu_data();
-    if( (mut_param_set_idx >=0) && (mut_param_set_idx < history->count()) && (Is_In_Test==0)) Flip_Bit((void*)(&(mut_param[mut_param_set_idx])));
+  if( (step_cur == mut_step) && (param_id==mut_param_set) ) {
+//  if( (step_cur == mut_step) && (rank_ == 0) && (param_id==mut_param_set) ) {
+    mut_param = (float *)history_[param_id]->mutable_cpu_data();
+    if( (mut_param_set_idx >=0) && (mut_param_set_idx < history_[param_id]->count()) && (Is_In_Test==0)) Flip_Bit((void*)(&(mut_param[mut_param_set_idx])));
   }
   
   // Compute the update to history, then copy it to the parameter diff.
