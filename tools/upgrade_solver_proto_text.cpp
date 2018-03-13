@@ -8,6 +8,7 @@
 #include <string>
 
 #include "caffe/caffe.hpp"
+#include "caffe/error.hpp"
 #include "caffe/util/io.hpp"
 #include "caffe/util/upgrade_proto.hpp"
 

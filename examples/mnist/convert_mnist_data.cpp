@@ -22,6 +22,7 @@
 #include <fstream>  // NOLINT(readability/streams)
 #include <string>
 
+#include "caffe/error.hpp"
 #include "boost/scoped_ptr.hpp"
 #include "caffe/proto/caffe.pb.h"
 #include "caffe/util/db.hpp"

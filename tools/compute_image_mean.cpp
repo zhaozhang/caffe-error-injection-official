@@ -8,6 +8,7 @@
 #include "gflags/gflags.h"
 #include "glog/logging.h"
 
+#include "caffe/error.hpp"
 #include "caffe/proto/caffe.pb.h"
 #include "caffe/util/db.hpp"
 #include "caffe/util/io.hpp"

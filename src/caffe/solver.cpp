@@ -176,16 +176,21 @@ void Solver<Dtype>::InitTestNets() {
   }
 }
 
+extern "C" int step_cur, Is_In_Test;
 template <typename Dtype>
 void Solver<Dtype>::Step(int iters) {
   const int start_iter = iter_;
   const int stop_iter = iter_ + iters;
+
+  step_cur = iter_;
+
   int average_loss = this->param_.average_loss();
   losses_.clear();
   smoothed_loss_ = 0;
   iteration_timer_.Start();
 
   while (iter_ < stop_iter) {
+    step_cur = iter_;
     // zero-init the params
     net_->ClearParamDiffs();
     if (param_.test_interval() && iter_ % param_.test_interval() == 0
@@ -248,6 +253,7 @@ void Solver<Dtype>::Step(int iters) {
     // Increment the internal iter_ counter -- its value should always indicate
     // the number of times the weights have been updated.
     ++iter_;
+    step_cur = iter_;
 
     SolverAction::Enum request = GetRequestedAction();
 
@@ -317,11 +323,13 @@ void Solver<Dtype>::Solve(const char* resume_file) {
 
 template <typename Dtype>
 void Solver<Dtype>::TestAll() {
+  Is_In_Test = 1;
   for (int test_net_id = 0;
        test_net_id < test_nets_.size() && !requested_early_exit_;
        ++test_net_id) {
     Test(test_net_id);
   }
+  Is_In_Test = 0;
 }
 
 template <typename Dtype>

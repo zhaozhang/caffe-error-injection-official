@@ -12,6 +12,7 @@
 #include "google/protobuf/text_format.h"
 #include "stdint.h"
 
+#include "caffe/error.hpp"
 #include "caffe/proto/caffe.pb.h"
 #include "caffe/util/format.hpp"
 #include "caffe/util/math_functions.hpp"

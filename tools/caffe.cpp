@@ -13,6 +13,7 @@ namespace bp = boost::python;
 
 #include "boost/algorithm/string.hpp"
 #include "caffe/caffe.hpp"
+#include "caffe/error.hpp"
 #include "caffe/util/signal_handler.h"
 
 using caffe::Blob;
@@ -426,6 +427,70 @@ int time() {
 }
 RegisterBrewFunction(time);
 
+void Init_Bit_Mask(void)
+{
+  int i, j;
+
+  for(i=0; i<32; i++) {
+    bit_mask[i] = 1;
+    for(j=0; j<i; j++) {
+      bit_mask[i] = bit_mask[i] << 1;
+    }
+  }
+}
+
+void Get_Env_Param(char szParam[], int& param, int value)
+{
+  char *szBuff;
+
+  szBuff = getenv(szParam);
+  if(szBuff==NULL) {
+    param = value;
+  }
+  else {
+    param = atoi(szBuff);
+  }
+  return;
+}
+
+void Get_Env_Param(char szParam[], float& param, float value)
+{
+  char *szBuff;
+
+  szBuff = getenv(szParam);
+  if(szBuff==NULL) {
+    param = value;
+  }
+  else {
+    param = atof(szBuff);
+  }
+  return;
+}
+
+
+
+void Get_Mutation_Params(void)
+{
+  Get_Env_Param("MUT_STEP", mut_step, -1);
+  Get_Env_Param("MUT_LAYER_FP", mut_layer_fp, -1);
+  Get_Env_Param("MUT_LAYER_BP", mut_layer_bp, -1);
+  Get_Env_Param("MUT_PARAM_SET", mut_param_set, -1);
+  Get_Env_Param("MUT_LAYER_FP_IDX", mut_layer_fp_idx, 0);
+  Get_Env_Param("MUT_LAYER_BP_IDX", mut_layer_bp_idx, 0);
+  Get_Env_Param("MUT_PARAM_SET_IDX", mut_param_set_idx, 0);
+  Get_Env_Param("MUT_BIT", mut_bit, 0);
+  Get_Env_Param("CLAMP_ON", Clamp_On, 0);
+  Get_Env_Param("DATA_RANGE", Data_Range, 1.0E7);
+
+
+  LOG(INFO) << "DBG: Param  MUT_STEP = " << mut_step << "  MUT_LAYER_FP = " << mut_layer_fp << "  MUT_LAYER_BP = " << mut_layer_bp << "  MUT_PARAM_SET = " << mut_param_set << "  MUT_LAYER_FP_IDX = " << mut_layer_fp_idx << "  MUT_LAYER_BP_IDX = " << mut_layer_bp_idx << "  MUT_PARAM_SET_IDX = " << mut_param_set_idx << "  MUT_BIT = " << mut_bit;
+
+  if(mut_bit > 31) LOG(INFO) << "Warning: MUT_BIT > 31. MUT_BIT = " << mut_bit;
+
+  Init_Bit_Mask();
+}
+
+
 int main(int argc, char** argv) {
   // Print output to stderr (while still logging).
   FLAGS_alsologtostderr = 1;
@@ -441,6 +506,9 @@ int main(int argc, char** argv) {
       "  time            benchmark model execution time");
   // Run tool or show usage.
   caffe::GlobalInit(&argc, &argv);
+
+  Get_Mutation_Params();
+
   if (argc == 2) {
 #ifdef WITH_PYTHON_LAYER
     try {

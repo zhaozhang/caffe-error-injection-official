@@ -14,6 +14,7 @@
 #include "google/protobuf/text_format.h"
 #include "stdint.h"
 
+#include "caffe/error.hpp"
 #include "caffe/proto/caffe.pb.h"
 #include "caffe/util/db.hpp"
 #include "caffe/util/format.hpp"

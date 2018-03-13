@@ -30,7 +30,7 @@ class Net {
 
   /// @brief Initialize a network with a NetParameter.
   void Init(const NetParameter& param);
-
+  void Print_Layer_Info(void);
   /**
    * @brief Run Forward and return the result.
    *
