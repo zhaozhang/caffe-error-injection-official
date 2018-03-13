@@ -550,6 +550,8 @@ Dtype Net<Dtype>::ForwardFromTo(int start, int end) {
   const Dtype *bot_data, *top_data;
   Dtype *mut_bot_data, *mut_bot_gpu_data;
 
+  Print_Layer_Info();
+
   Active = 0;
   for (int i = start; i <= end; ++i) {
     if( (step_cur == mut_step) && (deviceid<=0) && (mut_layer_fp==i) && (i>=1) ) { // layer 0 (data) does not have bottom
@@ -560,8 +562,13 @@ Dtype Net<Dtype>::ForwardFromTo(int start, int end) {
     }
 
     if(Active) {
-      mut_bot_data = bottom_vecs_[i][0]->mutable_cpu_data();
-      if( (mut_layer_fp_idx >=0) && (mut_layer_fp_idx < bottom_vecs_[i][0]->count()) && (Is_In_Test==0)) Flip_Bit((void*)(&(mut_bot_data[mut_layer_fp_idx])));
+      if(bottom_vecs_[i].size()) {
+        mut_bot_data = bottom_vecs_[i][0]->mutable_cpu_data();
+        if( (mut_layer_fp_idx >=0) && (mut_layer_fp_idx < bottom_vecs_[i][0]->count()) && (Is_In_Test==0)) Flip_Bit((void*)(&(mut_bot_data[mut_layer_fp_idx])));
+      }
+      else {
+        LOG(INFO) << "DBG: step " << step_cur << " size = " << bottom_vecs_[i].size() << ". Mutation is NOT possible due to no data.";
+      }
     }
 /*
     if(Clamp_On && (step_cur>0) ) { // crash when step_cur==0. Unknown yet. Maybe we need to check data ready or not first.
@@ -597,9 +604,15 @@ void Net<Dtype>::Print_Layer_Info(void)
 
   if( (step_cur == 1) && (deviceid <= 0) ) {  
     for(i = 0; i<= nLayers; i++) {
-      LOG(INFO) << "DBG: Layer info, id: " << i << " name = " << layer_names()[i] << " output type = " << layers_[i]->type() 
-        << "  size = " << top_vecs_[i][0]->count() << " (" << top_vecs_[i][0]->num() << ", " << top_vecs_[i][0]->channels() << ", " 
-        << top_vecs_[i][0]->height() << ", " << top_vecs_[i][0]->width() << ")" ;
+      if(top_vecs_[i].size()) {
+        LOG(INFO) << "DBG: Layer info, id: " << i << " name = " << layer_names()[i] << " output type = " << layers_[i]->type() 
+          << "  size = " << top_vecs_[i][0]->count() << " (" << top_vecs_[i][0]->num() << ", " << top_vecs_[i][0]->channels() << ", " 
+          << top_vecs_[i][0]->height() << ", " << top_vecs_[i][0]->width() << ")" ;
+      }
+      else {
+        LOG(INFO) << "DBG: Layer info, id: " << i << " name = " << layer_names()[i] << " output type = " << layers_[i]->type()
+          << "  size = 0 !!!!!!!!!!!!!!";
+      }
     }
 
     for(i = 0; i<= nLayers; i++) {
@@ -690,8 +703,13 @@ void Net<Dtype>::BackwardFromTo(int start, int end) {
     }
     if (layer_need_backward_[i]) {
       if(Active) {
-        mut_bot_data = bottom_vecs_[i][0]->mutable_cpu_data();
-        if( (mut_layer_bp_idx >=0) && (mut_layer_bp_idx < bottom_vecs_[i][0]->count()) && (Is_In_Test==0)) Flip_Bit((void*)(&(mut_bot_data[mut_layer_bp_idx])));
+        if(bottom_vecs_[i].size()) {
+          mut_bot_data = bottom_vecs_[i][0]->mutable_cpu_data();
+          if( (mut_layer_bp_idx >=0) && (mut_layer_bp_idx < bottom_vecs_[i][0]->count()) && (Is_In_Test==0)) Flip_Bit((void*)(&(mut_bot_data[mut_layer_bp_idx])));
+        }
+        else {
+          LOG(INFO) << "DBG: step " << step_cur << " size = " << bottom_vecs_[i].size() << ". Mutation is NOT possible due to no data.";
+        }
       }
       layers_[i]->Backward(
           top_vecs_[i], bottom_need_backward_[i], bottom_vecs_[i]);
