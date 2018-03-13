@@ -1,3 +1,4 @@
+# This is the error injection version of Caffe
 # Caffe
 
 [![Build Status](https://travis-ci.org/BVLC/caffe.svg?branch=master)](https://travis-ci.org/BVLC/caffe)
