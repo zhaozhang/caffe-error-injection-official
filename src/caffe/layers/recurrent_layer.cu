@@ -9,9 +9,12 @@
 
 namespace caffe {
 
+extern "C" __thread int Is_In_LSTM;
+
 template <typename Dtype>
 void RecurrentLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
     const vector<Blob<Dtype>*>& top) {
+  Is_In_LSTM = 1;
   // Hacky fix for test time... reshare all the shared blobs.
   // TODO: somehow make this work non-hackily.
   if (this->phase_ == TEST) {
@@ -37,6 +40,7 @@ void RecurrentLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
       top[i]->ShareData(*recur_output_blobs_[j]);
     }
   }
+  Is_In_LSTM = 0;
 }
 
 INSTANTIATE_LAYER_GPU_FORWARD(RecurrentLayer);

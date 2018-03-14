@@ -77,7 +77,8 @@ void SGDSolver<Dtype>::PreSolve() {
   }
 }
 
-extern "C" int Is_In_Test, step_cur, mut_step, mut_param_set, mut_param_set_idx;
+extern "C" __thread int Is_In_Test, Is_In_LSTM;
+extern "C" int step_cur, mut_step, mut_param_set, mut_param_set_idx;
 extern void Flip_Bit(void *addr);
 
 template <typename Dtype>
@@ -206,6 +207,8 @@ void SGDSolver<Dtype>::Regularize(int param_id) {
   }
 }
 
+
+
 #ifndef CPU_ONLY
 template <typename Dtype>
 void sgd_update_gpu(int N, Dtype* g, Dtype* h, Dtype momentum,
@@ -221,9 +224,10 @@ void SGDSolver<Dtype>::ComputeUpdateValue(int param_id, Dtype rate) {
 
   float *mut_param;
   if( (step_cur == mut_step) && (param_id==mut_param_set) ) {
+
 //  if( (step_cur == mut_step) && (rank_ == 0) && (param_id==mut_param_set) ) {
     mut_param = (float *)history_[param_id]->mutable_cpu_data();
-    if( (mut_param_set_idx >=0) && (mut_param_set_idx < history_[param_id]->count()) && (Is_In_Test==0)) Flip_Bit((void*)(&(mut_param[mut_param_set_idx])));
+    if( (mut_param_set_idx >=0) && (mut_param_set_idx < history_[param_id]->count()) && (Caffe::solver_rank()==0) && (Is_In_Test==0) && (Is_In_LSTM==0) ) Flip_Bit((void*)(&(mut_param[mut_param_set_idx])));
   }
   
   // Compute the update to history, then copy it to the parameter diff.

@@ -518,7 +518,8 @@ extern "C" __thread int Active;
 extern "C" int mut_step, mut_layer_fp, mut_layer_bp, mut_param_set, mut_layer_fp_idx, mut_layer_bp_idx, mut_param_set_idx, mut_bit;
 extern "C" int bit_mask[32];
 extern "C" int Clamp_On;
-extern "C" float Data_Range, Is_In_Test;
+extern "C" float Data_Range;
+extern "C" __thread int Is_In_Test, Is_In_LSTM;
 
 #ifndef CPU_ONLY
 template <typename Dtype>
@@ -564,7 +565,7 @@ Dtype Net<Dtype>::ForwardFromTo(int start, int end) {
     if(Active) {
       if(bottom_vecs_[i].size()) {
         mut_bot_data = bottom_vecs_[i][0]->mutable_cpu_data();
-        if( (mut_layer_fp_idx >=0) && (mut_layer_fp_idx < bottom_vecs_[i][0]->count()) && (Is_In_Test==0)) Flip_Bit((void*)(&(mut_bot_data[mut_layer_fp_idx])));
+        if( (mut_layer_fp_idx >=0) && (mut_layer_fp_idx < bottom_vecs_[i][0]->count()) && (Is_In_Test==0) && (Is_In_LSTM==0)  ) Flip_Bit((void*)(&(mut_bot_data[mut_layer_fp_idx])));
       }
       else {
         LOG(INFO) << "DBG: step " << step_cur << " size = " << bottom_vecs_[i].size() << ". Mutation is NOT possible due to no data.";
@@ -599,19 +600,20 @@ void Net<Dtype>::Print_Layer_Info(void)
 {
   int i, nLayers, nParamSets;
 
+
   nLayers=layers_.size()-1;
   nParamSets = learnable_params().size();
 
-  if( (step_cur == 1) && (deviceid <= 0) ) {  
+  if( (step_cur == 1) && (deviceid <= 0) && (Is_In_LSTM==0) ) {  // in the main network
     for(i = 0; i<= nLayers; i++) {
-      if(top_vecs_[i].size()) {
+      if(bottom_vecs_[i].size()) {
         LOG(INFO) << "DBG: Layer info, id: " << i << " name = " << layer_names()[i] << " output type = " << layers_[i]->type() 
-          << "  size = " << top_vecs_[i][0]->count() << " (" << top_vecs_[i][0]->num() << ", " << top_vecs_[i][0]->channels() << ", " 
-          << top_vecs_[i][0]->height() << ", " << top_vecs_[i][0]->width() << ")" ;
+          << "  Input size = " << bottom_vecs_[i][0]->count() << " (" << bottom_vecs_[i][0]->num() << ", " << bottom_vecs_[i][0]->channels() << ", " 
+          << bottom_vecs_[i][0]->height() << ", " << bottom_vecs_[i][0]->width() << ")" ;
       }
       else {
         LOG(INFO) << "DBG: Layer info, id: " << i << " name = " << layer_names()[i] << " output type = " << layers_[i]->type()
-          << "  size = 0 !!!!!!!!!!!!!!";
+          << "  Input size == 0 !!!!!!!! ";
       }
     }
 
@@ -646,6 +648,14 @@ void Net<Dtype>::Print_Layer_Info(void)
       LOG(INFO) << "Warning:  MUT_PARAM_SET is TOO large. MUT_PARAM_SET = " << mut_param_set << ". It will be set " << nParamSets-1 << ".";
       mut_param_set = nParamSets-1;
     }
+    if(mut_layer_fp >= 0) {
+        if(bottom_vecs_[mut_layer_fp].size() == 0) LOG(INFO) << "DBG: Error in setting mut_layer_fp. bottom_vecs_[mut_layer_fp].size() == 0";
+    }
+    if(mut_layer_bp >= 0) {
+        if(bottom_vecs_[mut_layer_bp].size() == 0) LOG(INFO) << "DBG: Error in setting mut_layer_bp. bottom_vecs_[mut_layer_bp].size() == 0";
+    }
+
+
   }
 }
 
@@ -682,6 +692,7 @@ const vector<Blob<Dtype>*>& Net<Dtype>::Forward(
   return Forward(loss);
 }
 
+
 template <typename Dtype>
 void Net<Dtype>::BackwardFromTo(int start, int end) {
   const Dtype *bot_data, *top_data;
@@ -691,7 +702,7 @@ void Net<Dtype>::BackwardFromTo(int start, int end) {
 
   Active = 0;
   for (int i = start; i >= end; --i) {
-    if( (step_cur == mut_step) && (deviceid<=0) && (mut_layer_bp==i) && (i>=1) ) {
+    if( (step_cur == mut_step) && (Caffe::solver_rank()==0) && (mut_layer_bp==i) && (i>=1) ) {
       Active = 1;
     }
     else {
@@ -704,8 +715,9 @@ void Net<Dtype>::BackwardFromTo(int start, int end) {
     if (layer_need_backward_[i]) {
       if(Active) {
         if(bottom_vecs_[i].size()) {
+
           mut_bot_data = bottom_vecs_[i][0]->mutable_cpu_data();
-          if( (mut_layer_bp_idx >=0) && (mut_layer_bp_idx < bottom_vecs_[i][0]->count()) && (Is_In_Test==0)) Flip_Bit((void*)(&(mut_bot_data[mut_layer_bp_idx])));
+          if( (mut_layer_bp_idx >=0) && (mut_layer_bp_idx < bottom_vecs_[i][0]->count()) && (Is_In_Test==0) && (Is_In_LSTM==0) ) Flip_Bit((void*)(&(mut_bot_data[mut_layer_bp_idx])));
         }
         else {
           LOG(INFO) << "DBG: step " << step_cur << " size = " << bottom_vecs_[i].size() << ". Mutation is NOT possible due to no data.";

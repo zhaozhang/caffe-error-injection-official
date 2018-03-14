@@ -43,7 +43,6 @@ extern "C" __thread int deviceid;
 
 void InternalThread::entry(int device, Caffe::Brew mode, int rand_seed,
     int solver_count, int solver_rank, bool multiprocess) {
-  deviceid = device;
 #ifndef CPU_ONLY
   CUDA_CHECK(cudaSetDevice(device));
 #endif
@@ -52,6 +51,8 @@ void InternalThread::entry(int device, Caffe::Brew mode, int rand_seed,
   Caffe::set_solver_count(solver_count);
   Caffe::set_solver_rank(solver_rank);
   Caffe::set_multiprocess(multiprocess);
+
+  deviceid = device;
 
   LOG(INFO) << "Started internal thread " << " "//std::this_thread::get_id()
             << " on device " << device << ", rank " << solver_rank;

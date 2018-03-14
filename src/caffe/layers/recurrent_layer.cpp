@@ -241,9 +241,12 @@ void RecurrentLayer<Dtype>::Reset() {
   }
 }
 
+extern "C" __thread int Is_In_LSTM;
+
 template <typename Dtype>
 void RecurrentLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
     const vector<Blob<Dtype>*>& top) {
+  Is_In_LSTM = 1;
   // Hacky fix for test time: reshare all the internal shared blobs, which may
   // currently point to a stale owner blob that was dropped when Solver::Test
   // called test_net->ShareTrainedLayersWith(net_.get()).
@@ -271,11 +274,13 @@ void RecurrentLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
       top[i]->ShareData(*recur_output_blobs_[j]);
     }
   }
+  Is_In_LSTM = 0;
 }
 
 template <typename Dtype>
 void RecurrentLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
     const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom) {
+  Is_In_LSTM = 1;
   CHECK(!propagate_down[1]) << "Cannot backpropagate to sequence indicators.";
 
   // TODO: skip backpropagation to inputs and parameters inside the unrolled
@@ -284,6 +289,7 @@ void RecurrentLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
   // the parameters do need backward (or Net would have set
   // layer_needs_backward_[i] == false for this layer).
   unrolled_net_->BackwardFrom(last_layer_index_);
+  Is_In_LSTM = 0;
 }
 
 #ifdef CPU_ONLY

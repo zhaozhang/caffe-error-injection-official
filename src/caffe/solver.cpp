@@ -176,7 +176,8 @@ void Solver<Dtype>::InitTestNets() {
   }
 }
 
-extern "C" int step_cur, Is_In_Test;
+extern "C" int step_cur;
+extern "C" __thread int Is_In_Test;
 template <typename Dtype>
 void Solver<Dtype>::Step(int iters) {
   const int start_iter = iter_;
