@@ -609,12 +609,21 @@ void Net<Dtype>::Print_Layer_Info(void)
       if(bottom_vecs_[i].size()) {
         LOG(INFO) << "DBG: Layer info, id: " << i << " name = " << layer_names()[i] << " output type = " << layers_[i]->type() 
           << "  Input size = " << bottom_vecs_[i][0]->count() << " (" << bottom_vecs_[i][0]->num() << ", " << bottom_vecs_[i][0]->channels() << ", " 
-          << bottom_vecs_[i][0]->height() << ", " << bottom_vecs_[i][0]->width() << ")" ;
+          << bottom_vecs_[i][0]->height() << ", " << bottom_vecs_[i][0]->width() << ").";
       }
       else {
         LOG(INFO) << "DBG: Layer info, id: " << i << " name = " << layer_names()[i] << " output type = " << layers_[i]->type()
           << "  Input size == 0 !!!!!!!! ";
       }
+
+      LOG(INFO) << "DBG:        Layer " << i << " name: " << layer_names_[i] << " " << layers_[i]->blobs().size() << " layer parameters.";
+      for (int param_id = 0; param_id < layers_[i]->blobs().size(); ++param_id) {
+        const Blob<Dtype>& blob = *layers_[i]->blobs()[param_id];
+        const int net_param_id = param_id_vecs_[i][param_id];
+        const string& blob_name = param_display_names_[net_param_id];
+        LOG(INFO) << "DBG:          Layer " << i << " name: " << layer_names_[i] << " param id " << param_id << " param blob " << blob_name << " param idx = " << net_param_id;
+      }
+
     }
 
     for(i = 0; i<= nLayers; i++) {
@@ -622,6 +631,8 @@ void Net<Dtype>::Print_Layer_Info(void)
         LOG(INFO) << "DBG: layer " << i << " supports Backward propagation. Type: " << layers_[i]->type() << ".";
       }
     }
+
+
     LOG(INFO) << "DBG: Output parameters info.";
     for (int param_id = 0; param_id < nParamSets; ++param_id) {
         LOG(INFO) << "DBG: " << param_id << "  size = " << learnable_params()[param_id]->count()
